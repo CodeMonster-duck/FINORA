@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="finoraBg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#8B5CF6" />
+      <stop offset="100%" stop-color="#6D28D9" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#finoraBg)" />
+  <path d="M18 18C18 16.3431 19.3431 15 21 15H46V23H26V29H41V37H26V49H18V18Z" fill="#FFFFFF" />
+  <circle cx="43" cy="43" r="6" fill="#C4B5FD" />
+</svg>
