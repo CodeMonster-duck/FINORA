@@ -45,6 +45,16 @@ def _parse_bool(value: str | None, default: bool) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def normalize_database_url(raw_url: str) -> str:
+    """Normalize SQLAlchemy DATABASE_URL for local SQLite and Neon/Render PostgreSQL."""
+    url = raw_url.strip()
+    if url.startswith("postgres://"):
+        return "postgresql+psycopg://" + url[len("postgres://") :]
+    if url.startswith("postgresql://"):
+        return "postgresql+psycopg://" + url[len("postgresql://") :]
+    return url
+
+
 def _parse_origins(raw: str | None, *, is_production: bool) -> list[str]:
     if not raw or not raw.strip():
         if is_production:
@@ -101,6 +111,7 @@ class Settings:
     auto_seed_demo: bool
     enable_demo_login: bool
     require_https: bool
+    auto_init_db: bool
     rate_limit_login_per_min: int
     rate_limit_register_per_min: int
 
@@ -109,8 +120,10 @@ def get_settings() -> Settings:
     app_env = os.getenv("APP_ENV", "development").strip().lower() or "development"
     is_dev = app_env in _DEV_ENVIRONMENTS
     is_prod = not is_dev
+    is_render = _parse_bool(os.getenv("RENDER"), False)
 
     default_sqlite = f"sqlite:///{(BASE_DIR / 'finora.db').as_posix()}"
+    raw_database_url = os.getenv("DATABASE_URL", default_sqlite)
     auto_seed = _parse_bool(os.getenv("AUTO_SEED_DEMO"), False)
     enable_demo = _parse_bool(os.getenv("ENABLE_DEMO_LOGIN"), False)
 
@@ -124,7 +137,7 @@ def get_settings() -> Settings:
         is_development=is_dev,
         is_production=is_prod,
         api_v1_prefix=os.getenv("API_V1_PREFIX", "/api/v1"),
-        database_url=os.getenv("DATABASE_URL", default_sqlite),
+        database_url=normalize_database_url(raw_database_url),
         secret_key=_resolve_secret_key(is_production=is_prod),
         algorithm=os.getenv("ALGORITHM", "HS256"),
         access_token_expire_minutes=int(
@@ -133,7 +146,8 @@ def get_settings() -> Settings:
         cors_origins=_parse_origins(os.getenv("CORS_ORIGINS"), is_production=is_prod),
         auto_seed_demo=auto_seed,
         enable_demo_login=enable_demo,
-        require_https=_parse_bool(os.getenv("REQUIRE_HTTPS"), is_prod),
+        require_https=_parse_bool(os.getenv("REQUIRE_HTTPS"), is_prod and not is_render),
+        auto_init_db=_parse_bool(os.getenv("AUTO_INIT_DB"), True),
         rate_limit_login_per_min=max(
             1, int(os.getenv("RATE_LIMIT_LOGIN_PER_MIN", "15"))
         ),

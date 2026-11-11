@@ -6,6 +6,7 @@ from datetime import date as dt_date
 
 from fastapi import HTTPException, status
 from sqlalchemy import asc, desc, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.budget import Budget
@@ -391,7 +392,14 @@ def create_budget(db: Session, user_id: int, payload: BudgetCreate) -> Budget:
         notes=payload.notes,
     )
     db.add(budget)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"A budget for '{payload.category}' already exists for {payload.month}.",
+        ) from exc
     db.refresh(budget)
     return budget
 
@@ -420,7 +428,14 @@ def update_budget(
     budget.alert_threshold = payload.alert_threshold
     budget.notes = payload.notes
     db.add(budget)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"A budget for '{payload.category}' already exists for {payload.month}.",
+        ) from exc
     db.refresh(budget)
     return budget
 

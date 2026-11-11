@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password, verify_password
@@ -68,7 +69,14 @@ def register_user(db: Session, payload: UserRegister) -> User:
         is_demo=False,
     )
     db.add(user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with this email address already exists.",
+        ) from exc
     db.refresh(user)
     return user
 
@@ -103,7 +111,14 @@ def update_user_profile(db: Session, user: User, payload: UserProfileUpdate) -> 
     user.role = payload.role.strip() or user.role
     user.monthly_income_target_paise = to_paise(payload.monthly_income_target)
     db.add(user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email is already used by another account.",
+        ) from exc
     db.refresh(user)
     return user
 

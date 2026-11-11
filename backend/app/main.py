@@ -22,7 +22,8 @@ from app.services.seed_service import seed_demo_database
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    init_db()
+    if settings.auto_init_db:
+        init_db()
     if settings.auto_seed_demo and settings.is_development:
         db = SessionLocal()
         try:

@@ -24,7 +24,7 @@ def upgrade() -> None:
         "users",
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column("name", sa.String(length=120), nullable=False),
-        sa.Column("email", sa.String(length=255), nullable=False, unique=True),
+        sa.Column("email", sa.String(length=255), nullable=False),
         sa.Column("hashed_password", sa.String(length=255), nullable=False),
         sa.Column("role", sa.String(length=120), nullable=False),
         sa.Column("monthly_income_target_paise", sa.BigInteger(), nullable=False),
@@ -40,6 +40,9 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
     )
+    op.create_index("ix_users_id", "users", ["id"], unique=False)
+    op.create_index("ix_users_email", "users", ["email"], unique=True)
+
     op.create_table(
         "transactions",
         sa.Column("id", sa.Integer(), primary_key=True),
@@ -56,6 +59,11 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
     )
+    op.create_index("ix_transactions_id", "transactions", ["id"], unique=False)
+    op.create_index("ix_transactions_user_id", "transactions", ["user_id"], unique=False)
+    op.create_index("ix_transactions_user_date", "transactions", ["user_id", "date"], unique=False)
+    op.create_index("ix_transactions_user_type", "transactions", ["user_id", "type"], unique=False)
+
     op.create_table(
         "budgets",
         sa.Column("id", sa.Integer(), primary_key=True),
@@ -69,6 +77,10 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.UniqueConstraint("user_id", "category", "month", name="uq_budgets_user_category_month"),
     )
+    op.create_index("ix_budgets_id", "budgets", ["id"], unique=False)
+    op.create_index("ix_budgets_user_id", "budgets", ["user_id"], unique=False)
+    op.create_index("ix_budgets_month", "budgets", ["month"], unique=False)
+
     op.create_table(
         "savings_goals",
         sa.Column("id", sa.Integer(), primary_key=True),
@@ -82,6 +94,9 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
     )
+    op.create_index("ix_savings_goals_id", "savings_goals", ["id"], unique=False)
+    op.create_index("ix_savings_goals_user_id", "savings_goals", ["user_id"], unique=False)
+
     op.create_table(
         "savings_contributions",
         sa.Column("id", sa.Integer(), primary_key=True),
@@ -91,6 +106,9 @@ def upgrade() -> None:
         sa.Column("note", sa.String(length=255), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
     )
+    op.create_index("ix_savings_contributions_id", "savings_contributions", ["id"], unique=False)
+    op.create_index("ix_savings_contributions_goal_id", "savings_contributions", ["goal_id"], unique=False)
+
     op.create_table(
         "notifications",
         sa.Column("id", sa.Integer(), primary_key=True),
@@ -103,12 +121,36 @@ def upgrade() -> None:
         sa.Column("is_read", sa.Boolean(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
     )
+    op.create_index("ix_notifications_id", "notifications", ["id"], unique=False)
+    op.create_index("ix_notifications_user_id", "notifications", ["user_id"], unique=False)
+    op.create_index("ix_notifications_source_key", "notifications", ["source_key"], unique=False)
 
 
 def downgrade() -> None:
+    op.drop_index("ix_notifications_source_key", table_name="notifications")
+    op.drop_index("ix_notifications_user_id", table_name="notifications")
+    op.drop_index("ix_notifications_id", table_name="notifications")
     op.drop_table("notifications")
+
+    op.drop_index("ix_savings_contributions_goal_id", table_name="savings_contributions")
+    op.drop_index("ix_savings_contributions_id", table_name="savings_contributions")
     op.drop_table("savings_contributions")
+
+    op.drop_index("ix_savings_goals_user_id", table_name="savings_goals")
+    op.drop_index("ix_savings_goals_id", table_name="savings_goals")
     op.drop_table("savings_goals")
+
+    op.drop_index("ix_budgets_month", table_name="budgets")
+    op.drop_index("ix_budgets_user_id", table_name="budgets")
+    op.drop_index("ix_budgets_id", table_name="budgets")
     op.drop_table("budgets")
+
+    op.drop_index("ix_transactions_user_type", table_name="transactions")
+    op.drop_index("ix_transactions_user_date", table_name="transactions")
+    op.drop_index("ix_transactions_user_id", table_name="transactions")
+    op.drop_index("ix_transactions_id", table_name="transactions")
     op.drop_table("transactions")
+
+    op.drop_index("ix_users_email", table_name="users")
+    op.drop_index("ix_users_id", table_name="users")
     op.drop_table("users")
