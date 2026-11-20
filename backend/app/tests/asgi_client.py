@@ -101,12 +101,14 @@ class SimpleASGIClient:
         status_code = 500
         resp_headers: dict[str, str] = {}
         chunks: list[bytes] = []
+        disconnect_event = asyncio.Event()
 
         async def receive() -> dict[str, Any]:
             nonlocal sent
             if not sent:
                 sent = True
                 return {"type": "http.request", "body": body_bytes, "more_body": False}
+            await disconnect_event.wait()
             return {"type": "http.disconnect"}
 
         async def send(message: dict[str, Any]) -> None:
@@ -119,6 +121,8 @@ class SimpleASGIClient:
                 }
             elif message["type"] == "http.response.body":
                 chunks.append(message.get("body", b""))
+                if not message.get("more_body", False):
+                    disconnect_event.set()
 
         await self.app(scope, receive, send)
         return ASGIResponse(
