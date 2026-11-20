@@ -1,14 +1,16 @@
 import { lazy, Suspense, useState } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Sparkles } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthScreen } from './components/AuthScreen';
 import { BudgetFormModal } from './components/BudgetFormModal';
+import { CopilotDrawer } from './components/CopilotDrawer';
 import { HelpSupportModal } from './components/HelpSupportModal';
 import { SavingsGoalModal } from './components/SavingsGoalModal';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
 import { TransactionFormModal } from './components/TransactionFormModal';
+import { VoiceAssistantModal } from './components/VoiceAssistantModal';
 import { FinanceProvider } from './context/FinanceContext';
 import { useFinance } from './context/financeStore';
 
@@ -66,6 +68,8 @@ function FinoraAppShell() {
   } = useFinance();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [copilotOpen, setCopilotOpen] = useState(false);
+  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
 
   if (!isAuthenticated) {
     return <AuthScreen />;
@@ -79,7 +83,11 @@ function FinoraAppShell() {
       />
 
       <div className="main-column">
-        <Topbar onOpenMobileMenu={() => setMobileMenuOpen(true)} />
+        <Topbar
+          onOpenMobileMenu={() => setMobileMenuOpen(true)}
+          onOpenCopilot={() => setCopilotOpen(true)}
+          onOpenVoice={() => setVoiceModalOpen(true)}
+        />
 
         <main className="page-content">
           {error && (
@@ -170,6 +178,48 @@ function FinoraAppShell() {
       <HelpSupportModal
         isOpen={quickModal.kind === 'help'}
         onClose={() => setQuickModal({ kind: 'none' })}
+      />
+
+      {/* Floating AI Copilot Trigger */}
+      <button
+        type="button"
+        onClick={() => setCopilotOpen(true)}
+        style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          zIndex: 8888,
+          borderRadius: '50px',
+          padding: '12px 18px',
+          background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
+          color: '#FFFFFF',
+          border: '1px solid rgba(255, 255, 255, 0.25)',
+          boxShadow: '0 8px 24px rgba(139, 92, 246, 0.45)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontWeight: 700,
+          fontSize: '13px',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+        }}
+        title="Open AI Financial Copilot"
+      >
+        <Sparkles size={16} />
+        <span>Ask Copilot</span>
+      </button>
+
+      {/* AI Financial Copilot Drawer */}
+      <CopilotDrawer
+        isOpen={copilotOpen}
+        onClose={() => setCopilotOpen(false)}
+      />
+
+      {/* Voice Finance Assistant Modal */}
+      <VoiceAssistantModal
+        isOpen={voiceModalOpen}
+        onClose={() => setVoiceModalOpen(false)}
+        onConfirmTransaction={addTransaction}
       />
     </div>
   );

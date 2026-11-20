@@ -26,6 +26,7 @@ import {
 import { ChartCard } from '../components/ChartCard';
 import { ChartTooltip } from '../components/ChartTooltip';
 import { EmptyState } from '../components/EmptyState';
+import { ExpenseForecastCard } from '../components/ExpenseForecastCard';
 import { PageHeader } from '../components/PageHeader';
 import { StatCard } from '../components/StatCard';
 import { useFinance } from '../context/financeStore';
@@ -599,6 +600,9 @@ export function Analytics() {
               })()}
             </section>
           </section>
+
+          {/* AI Expense Prediction & Burn-Rate Forecast */}
+          <ExpenseForecastCard currency={currency} />
         </>
       )}
     </div>

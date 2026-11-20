@@ -4,6 +4,7 @@ import { Plus, Target } from 'lucide-react';
 import { EmptyState } from '../components/EmptyState';
 import { Modal } from '../components/Modal';
 import { PageHeader } from '../components/PageHeader';
+import { SavingsCoachSection } from '../components/SavingsCoachSection';
 import { SavingsGoalCard } from '../components/SavingsGoalCard';
 import { SavingsGoalModal } from '../components/SavingsGoalModal';
 import { useFinance } from '../context/financeStore';
@@ -38,11 +39,32 @@ export function Savings() {
   const currency = settings.preferences.currency;
   const dateFormat = settings.preferences.dateFormat;
 
-  const openContributeModal = (goal: SavingsGoal) => {
+  const openContributeModal = (
+    goal: SavingsGoal,
+    initialAmount?: number,
+    initialNote?: string,
+  ) => {
     setContributingGoal(goal);
-    setContribAmount('');
-    setContribNote('');
+    setContribAmount(initialAmount ? String(initialAmount) : '');
+    setContribNote(initialNote || '');
     setContribError('');
+  };
+
+  const handleApplyCoachRecommendation = (
+    goalId: number | null,
+    suggestedAmount: number,
+    note: string,
+  ) => {
+    const targetGoal =
+      (goalId ? goalsWithProgress.find((g) => Number(g.goal.id) === goalId) : null) ||
+      goalsWithProgress.find((g) => !g.progress.isCompleted) ||
+      goalsWithProgress[0];
+
+    if (targetGoal) {
+      openContributeModal(targetGoal.goal, suggestedAmount, note);
+    } else {
+      setGoalModalOpen(true);
+    }
   };
 
   const handleContributionSubmit = async (e: FormEvent) => {
@@ -145,6 +167,12 @@ export function Savings() {
           </span>
         </div>
       </section>
+
+      {/* AI Savings Coach */}
+      <SavingsCoachSection
+        currency={currency}
+        onApplyRecommendation={handleApplyCoachRecommendation}
+      />
 
       {/* Goals Grid */}
       {goalsWithProgress.length === 0 ? (

@@ -4,10 +4,12 @@ import {
   Calendar,
   HelpCircle,
   Menu,
+  Mic,
   Moon,
   Plus,
   Search,
   Settings,
+  Sparkles,
   Sun,
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -18,6 +20,8 @@ import { NotificationPanel } from './NotificationPanel';
 
 interface TopbarProps {
   onOpenMobileMenu: () => void;
+  onOpenCopilot?: () => void;
+  onOpenVoice?: () => void;
 }
 
 const ROUTE_TITLES: Record<string, string> = {
@@ -30,7 +34,11 @@ const ROUTE_TITLES: Record<string, string> = {
   '/settings': 'Settings',
 };
 
-export function Topbar({ onOpenMobileMenu }: TopbarProps) {
+export function Topbar({
+  onOpenMobileMenu,
+  onOpenCopilot,
+  onOpenVoice,
+}: TopbarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const {
@@ -174,6 +182,19 @@ export function Topbar({ onOpenMobileMenu }: TopbarProps) {
             }}
             aria-label="Global financial search"
           />
+          <button
+            type="button"
+            className="icon-btn"
+            style={{ width: '28px', height: '28px', color: '#A78BFA', padding: 0 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenVoice?.();
+            }}
+            title="Voice Finance Assistant (Speak transactions or questions)"
+            aria-label="Voice Finance Assistant"
+          >
+            <Mic size={15} />
+          </button>
           <span className="topbar-search-kbd">Ctrl K</span>
         </div>
 
@@ -243,6 +264,24 @@ export function Topbar({ onOpenMobileMenu }: TopbarProps) {
           <Calendar size={14} style={{ color: 'var(--accent-lavender)' }} />
           <span>{todayLabel}</span>
         </div>
+
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: 'rgba(139, 92, 246, 0.15)',
+            borderColor: 'rgba(139, 92, 246, 0.35)',
+            color: '#DDD6FE',
+          }}
+          onClick={onOpenCopilot}
+          title="Open AI Financial Copilot"
+        >
+          <Sparkles size={14} style={{ color: '#A78BFA' }} />
+          <span className="topbar-quick-label">AI Copilot</span>
+        </button>
 
         <button
           type="button"

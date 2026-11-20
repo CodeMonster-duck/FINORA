@@ -295,3 +295,5 @@ export const SAVINGS_GOAL_CATEGORIES: readonly SavingsGoalCategory[] = [
   'Investment',
   'Other',
 ] as const;
+
+export * from './ai';

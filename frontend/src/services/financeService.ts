@@ -16,6 +16,11 @@ import type {
   TransactionInput,
   UserSettings,
   WeeklySpendingPoint,
+  CopilotChatMessage,
+  CopilotChatResponse,
+  ExpensePredictionResponse,
+  SavingsCoachPlan,
+  VoiceParseResponse,
 } from '../types';
 import { getMonthKey } from '../utils/calculations';
 import { getCategoryColor } from '../utils/formatters';
@@ -431,5 +436,42 @@ export const financeService = {
     });
 
     return mapApiUserToSettings(updatedUser, getLocalUiPreferences());
+  },
+
+  // ---------------- AI Endpoints ----------------
+  async sendCopilotChat(
+    message: string,
+    history: CopilotChatMessage[] = [],
+  ): Promise<CopilotChatResponse> {
+    const { data } = await apiClient.post<CopilotChatResponse>(
+      '/ai/copilot/chat',
+      {
+        message,
+        conversation_history: history,
+      },
+    );
+    return data;
+  },
+
+  async getExpensePredictions(): Promise<ExpensePredictionResponse> {
+    const { data } = await apiClient.get<ExpensePredictionResponse>(
+      '/ai/predictions/expenses',
+    );
+    return data;
+  },
+
+  async getSavingsCoachPlan(): Promise<SavingsCoachPlan> {
+    const { data } = await apiClient.get<SavingsCoachPlan>(
+      '/ai/savings/coach-plan',
+    );
+    return data;
+  },
+
+  async parseVoiceCommand(transcript: string): Promise<VoiceParseResponse> {
+    const { data } = await apiClient.post<VoiceParseResponse>(
+      '/ai/voice/parse',
+      { transcript },
+    );
+    return data;
   },
 };

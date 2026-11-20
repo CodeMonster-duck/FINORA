@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 from app.api.routes import (
+    ai,
     analytics,
     auth,
     budgets,
@@ -78,6 +79,7 @@ def create_application() -> FastAPI:
     application.include_router(savings.router, prefix=prefix)
     application.include_router(analytics.router, prefix=prefix)
     application.include_router(notifications.router, prefix=prefix)
+    application.include_router(ai.router, prefix=prefix)
 
     @application.get("/", tags=["Health"])
     def root() -> dict[str, str]:

@@ -28,6 +28,7 @@ import { BudgetProgress } from '../components/BudgetProgress';
 import { ChartCard } from '../components/ChartCard';
 import { ChartTooltip } from '../components/ChartTooltip';
 import { EmptyState } from '../components/EmptyState';
+import { ExpenseForecastCard } from '../components/ExpenseForecastCard';
 import { FinancialHealthCard } from '../components/FinancialHealthCard';
 import { PageHeader } from '../components/PageHeader';
 import { QuickActions } from '../components/QuickActions';
@@ -432,6 +433,9 @@ export function Dashboard() {
           )}
         </ChartCard>
       </section>
+
+      {/* AI Expense Prediction & Burn-Rate Forecast */}
+      <ExpenseForecastCard currency={currency} compact={compact} />
 
       {/* E & F. Recent Transactions & Budget Overview */}
       <section className="grid-dashboard-bottom">
