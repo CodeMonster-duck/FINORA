@@ -179,7 +179,9 @@ All existing pins (`fastapi==0.162.4`, `uvicorn==0.54.0`, `SQLAlchemy==2.1.8`, `
 
 ### Confirmed GitHub Commit
 - **Repository:** `https://github.com/CodeMonster-duck/FINORA`
-- **Branch / Commit:** Pending final push confirmation (updated immediately upon push).
+- **Branch:** `main` (tracking `origin/main`)
+- **Confirmed Commit SHA:** `d3710003b494dba016a4cefa11f78f7d7690b79b` (`feat: prepare PostgreSQL and Neon production deployment`, parent `aa9050f` preserved)
+- **Remote Verification (`origin/main` tree):** `123` tracked files confirmed via GitHub REST API and `git ls-remote origin`; `0` forbidden paths (`.env`, `*.db*`, `backups/`, `node_modules/`, `venv/`, `dist/`, `__pycache__/`). *(Note: this Confirmed GitHub Commit entry was written to `POSTGRESQL_DEPLOYMENT_AUDIT.md` immediately after push verification.)*
 
 ### Remaining Cloud Deployment Blockers
 1. **No Neon PostgreSQL Database Provisioned Yet:** `DATABASE_URL` does not yet exist in cloud environment configuration.
