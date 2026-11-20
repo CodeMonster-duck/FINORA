@@ -5,27 +5,27 @@ from datetime import date as dt_date
 from sqlalchemy.orm import Session
 
 from app.schemas.ai import VoiceParseResponse, VoiceParsedTransactionOut
-from app.services.ai_copilot_service import process_copilot_chat
+from app.services.ai_copilot_service import _detect_query_language, process_copilot_chat
 
 
 CATEGORY_KEYWORDS: dict[str, list[str]] = {
     # Income
-    "Salary": ["salary", "paycheck", "wages", "payroll"],
+    "Salary": ["salary", "paycheck", "wages", "payroll", "tankhwah", "vetan", "वेतन"],
     "Freelancing": ["freelance", "contract", "client payout", "consulting", "gig"],
-    "Business": ["business revenue", "sales", "merchant", "customer payment"],
-    "Investment income": ["dividend", "stocks", "mutual fund", "interest", "crypto gain"],
-    "Other income": ["cashback", "refund", "gift received", "bonus"],
+    "Business": ["business revenue", "sales", "merchant", "customer payment", "vyapar"],
+    "Investment income": ["dividend", "stocks", "mutual fund", "interest", "crypto gain", "byaj"],
+    "Other income": ["cashback", "refund", "gift received", "bonus", "inam"],
     # Expense
-    "Food": ["food", "dinner", "lunch", "breakfast", "snacks", "coffee", "restaurant", "cafe", "dominos", "swiggy", "zomato", "burger", "pizza"],
-    "Groceries": ["groceries", "grocery", "supermarket", "vegetables", "fruits", "milk", "blinkit", "zepto", "instamart"],
-    "Transport": ["transport", "cab", "uber", "ola", "auto", "metro", "bus", "petrol", "diesel", "fuel", "train ticket", "flight"],
-    "Shopping": ["shopping", "clothes", "amazon", "flipkart", "shoes", "electronics", "mall", "myntra"],
-    "Entertainment": ["entertainment", "movie", "cinema", "netflix", "concert", "game", "party", "theatre"],
-    "Bills": ["electricity", "water", "gas bill", "wifi", "internet", "broadband", "mobile recharge", "bill", "utility"],
+    "Food": ["food", "dinner", "lunch", "breakfast", "snacks", "coffee", "restaurant", "cafe", "dominos", "swiggy", "zomato", "burger", "pizza", "khana", "nashta", "chai", "खाना"],
+    "Groceries": ["groceries", "grocery", "supermarket", "vegetables", "fruits", "milk", "blinkit", "zepto", "instamart", "rashan", "sabzi", "दूध", "राशन"],
+    "Transport": ["transport", "cab", "uber", "ola", "auto", "metro", "bus", "petrol", "diesel", "fuel", "train ticket", "flight", "kiraya"],
+    "Shopping": ["shopping", "clothes", "amazon", "flipkart", "shoes", "electronics", "mall", "myntra", "kapde", "खरीदारी"],
+    "Entertainment": ["entertainment", "movie", "cinema", "netflix", "concert", "game", "party", "theatre", "film"],
+    "Bills": ["electricity", "water", "gas bill", "wifi", "internet", "broadband", "mobile recharge", "bill", "utility", "bijli"],
     "Subscriptions": ["subscription", "prime", "spotify", "youtube premium", "gym membership"],
-    "Rent": ["rent", "maintenance", "landlord"],
-    "Healthcare": ["medicine", "doctor", "hospital", "pharmacy", "medical", "clinic", "health"],
-    "Education": ["tuition", "books", "course", "udemy", "college fee", "school fee"],
+    "Rent": ["rent", "maintenance", "landlord", "kamre ka kiraya"],
+    "Healthcare": ["medicine", "doctor", "hospital", "pharmacy", "medical", "clinic", "health", "dawa", "दवाई"],
+    "Education": ["tuition", "books", "course", "udemy", "college fee", "school fee", "kitabein", "padhai"],
     "Other": ["miscellaneous", "cash withdrawal", "fees", "fine"],
 }
 
@@ -33,7 +33,7 @@ PAYMENT_METHOD_KEYWORDS: dict[str, list[str]] = {
     "UPI": ["upi", "gpay", "google pay", "phonepe", "paytm", "qr code"],
     "Credit Card": ["credit card", "credit"],
     "Debit Card": ["debit card", "debit", "atm card"],
-    "Cash": ["cash"],
+    "Cash": ["cash", "nagad", "नकद"],
     "Net Banking": ["net banking", "internet banking"],
     "Bank Transfer": ["bank transfer", "neft", "rtgs", "imps", "wire"],
     "Wallet": ["wallet"],
@@ -43,14 +43,21 @@ PAYMENT_METHOD_KEYWORDS: dict[str, list[str]] = {
 def parse_voice_command(db: Session, user_id: int, transcript: str) -> VoiceParseResponse:
     """
     Parses spoken natural language commands into structured financial intents.
+    Supports English, Hindi, and Hinglish.
     For any transaction extraction, requires_confirmation is strictly enforced as True.
     """
     text = transcript.strip()
     lower = text.lower()
+    lang = _detect_query_language(text)
 
     # 1. Check for Query intents
-    if any(k in lower for k in ["what is my balance", "check balance", "current balance", "how much money do i have"]):
-        copilot_res = process_copilot_chat(db, user_id, "What is my current net balance?")
+    balance_triggers = [
+        "what is my balance", "check balance", "current balance", "how much money do i have",
+        "mera balance", "balance kitna", "kitna paisa", "kitne paise", "khate me kitna",
+        "खाता शेष", "बैलेंस कितना", "कुल शेष"
+    ]
+    if any(k in lower for k in balance_triggers):
+        copilot_res = process_copilot_chat(db, user_id, text)
         return VoiceParseResponse(
             intent="query_balance",
             confidence=0.95,
@@ -60,8 +67,13 @@ def parse_voice_command(db: Session, user_id: int, transcript: str) -> VoicePars
             direct_reply=copilot_res.reply,
         )
 
-    if any(k in lower for k in ["how much did i spend", "total spending", "where did my money go", "highest expense"]):
-        copilot_res = process_copilot_chat(db, user_id, "Where did I spend my money this month?")
+    spend_triggers = [
+        "how much did i spend", "total spending", "where did my money go", "highest expense",
+        "kharcha kitna", "kitna kharcha", "kahan kharch kiya", "kahan gaya paisa",
+        "खर्च कितना", "कहाँ खर्च"
+    ]
+    if any(k in lower for k in spend_triggers):
+        copilot_res = process_copilot_chat(db, user_id, text)
         return VoiceParseResponse(
             intent="query_spending",
             confidence=0.92,
@@ -71,8 +83,12 @@ def parse_voice_command(db: Session, user_id: int, transcript: str) -> VoicePars
             direct_reply=copilot_res.reply,
         )
 
-    if any(k in lower for k in ["check budget", "budget status", "how is my budget", "am i over budget"]):
-        copilot_res = process_copilot_chat(db, user_id, "Check my budget status.")
+    budget_triggers = [
+        "check budget", "budget status", "how is my budget", "am i over budget",
+        "budget kitna", "budget paar", "बजट कितना", "बजट स्थिति"
+    ]
+    if any(k in lower for k in budget_triggers):
+        copilot_res = process_copilot_chat(db, user_id, text)
         return VoiceParseResponse(
             intent="query_budget",
             confidence=0.90,
@@ -82,8 +98,12 @@ def parse_voice_command(db: Session, user_id: int, transcript: str) -> VoicePars
             direct_reply=copilot_res.reply,
         )
 
-    if any(k in lower for k in ["savings goal", "how are my savings", "savings progress"]):
-        copilot_res = process_copilot_chat(db, user_id, "What is my savings goal progress?")
+    savings_triggers = [
+        "savings goal", "how are my savings", "savings progress",
+        "bachat kitni", "savings kitni", "बचत लक्ष्य", "बचत कितनी"
+    ]
+    if any(k in lower for k in savings_triggers):
+        copilot_res = process_copilot_chat(db, user_id, text)
         return VoiceParseResponse(
             intent="query_savings",
             confidence=0.90,
@@ -94,14 +114,15 @@ def parse_voice_command(db: Session, user_id: int, transcript: str) -> VoicePars
         )
 
     # 2. Extract numeric amount
-    # Matches: ₹500, Rs. 500, 500 rupees, 500rs, 1.5k, 500
+    # Matches: ₹500, Rs. 500, 500 rupees, 500rs, 1.5k, 500 rupaye, रु 500
     amount: float | None = None
-    amount_match = re.search(r'(?:₹|rs\.?|inr)?\s*(\d+(?:[.,]\d+)?)\s*(?:k|thousand|rupees?|rs)?', lower)
+    amount_match = re.search(r'(?:₹|rs\.?|inr|रु\.?|रुपये)?\s*(\d+(?:[.,]\d+)?)\s*(?:k|thousand|rupees?|rs|rupaye|rupayee|हज़ार|रुपये)?', lower)
     if amount_match:
         raw_num = amount_match.group(1).replace(",", "")
         try:
             val = float(raw_num)
-            if "k" in amount_match.group(0).lower() or "thousand" in amount_match.group(0).lower():
+            matched_str = amount_match.group(0).lower()
+            if "k" in matched_str or "thousand" in matched_str or "हज़ार" in matched_str:
                 val *= 1000
             if val > 0:
                 amount = round(val, 2)
@@ -109,7 +130,11 @@ def parse_voice_command(db: Session, user_id: int, transcript: str) -> VoicePars
             amount = None
 
     # Determine type: income vs expense
-    is_income = any(w in lower for w in ["received", "got", "income", "earned", "salary", "credited", "freelance payout"])
+    income_indicators = [
+        "received", "got", "income", "earned", "salary", "credited", "freelance payout",
+        "mila", "mile", "kamaya", "aaye", "aayi", "vetan", "वेतन", "मिला"
+    ]
+    is_income = any(w in lower for w in income_indicators)
     tx_type = "income" if is_income else "expense"
 
     # Match Category
@@ -130,9 +155,13 @@ def parse_voice_command(db: Session, user_id: int, transcript: str) -> VoicePars
 
     # If amount was found, create parsed transaction
     if amount is not None and amount > 0:
-        # Build a readable title
-        # Clean transcript from filler words
-        clean_title = re.sub(r'\b(spent|paid|add|record|received|got|rupees|rs|via|using|for|on|with|through)\b', '', text, flags=re.IGNORECASE)
+        # Clean title from filler words in EN/HI/Hinglish
+        clean_title = re.sub(
+            r'\b(spent|paid|add|record|received|got|rupees|rs|via|using|for|on|with|through|kharcha|kharch|diye|rupaye|rupayee|par|se|ka|ki|ko)\b',
+            '',
+            text,
+            flags=re.IGNORECASE,
+        )
         clean_title = re.sub(r'[\d₹,.]+', '', clean_title).strip()
         if not clean_title or len(clean_title) < 2:
             clean_title = f"{matched_category} {'Income' if is_income else 'Expense'}"
@@ -147,10 +176,21 @@ def parse_voice_command(db: Session, user_id: int, transcript: str) -> VoicePars
             description=f"Voice command: \"{text}\"",
         )
 
-        spoken = (
-            f"I identified an {tx_type} of ₹{amount:,.0f} for {matched_category} via {matched_payment}. "
-            f"Please review and confirm to save this transaction."
-        )
+        if lang == "hindi":
+            spoken = (
+                f"मैंने {matched_category} के लिए {matched_payment} द्वारा ₹{amount:,.0f} का {tx_type} पहचाना है। "
+                f"कृपया सुरक्षित करने से पहले विवरण की पुष्टि करें।"
+            )
+        elif lang == "hinglish":
+            spoken = (
+                f"Maine ₹{amount:,.0f} ka {tx_type} identify kiya hai ({matched_category} via {matched_payment}). "
+                f"Please verify karke confirm karein."
+            )
+        else:
+            spoken = (
+                f"I identified an {tx_type} of ₹{amount:,.0f} for {matched_category} via {matched_payment}. "
+                f"Please review and confirm to save this transaction."
+            )
 
         return VoiceParseResponse(
             intent="add_transaction",

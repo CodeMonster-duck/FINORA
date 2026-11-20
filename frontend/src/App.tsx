@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { AlertCircle, Sparkles } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
@@ -70,6 +70,17 @@ function FinoraAppShell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleVoiceShortcut = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm') {
+        e.preventDefault();
+        setVoiceModalOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleVoiceShortcut);
+    return () => window.removeEventListener('keydown', handleVoiceShortcut);
+  }, []);
 
   if (!isAuthenticated) {
     return <AuthScreen />;

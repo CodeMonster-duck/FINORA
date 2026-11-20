@@ -272,6 +272,24 @@ export function Topbar({
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
+            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%)',
+            borderColor: 'rgba(236, 72, 153, 0.35)',
+            color: '#F472B6',
+          }}
+          onClick={onOpenVoice}
+          title="Open AI Voice Assistant (Ctrl+M)"
+        >
+          <Mic size={14} style={{ color: '#F472B6' }} />
+          <span className="topbar-quick-label">Voice AI</span>
+        </button>
+
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
             background: 'rgba(139, 92, 246, 0.15)',
             borderColor: 'rgba(139, 92, 246, 0.35)',
             color: '#DDD6FE',
