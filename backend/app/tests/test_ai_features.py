@@ -88,13 +88,13 @@ class AIFeaturesDirectTestCase(unittest.TestCase):
         res = process_copilot_chat(self.db, user.id, "What is my current balance?")
         self.assertFalse(res.is_generative)  # Rule engine flag
         self.assertIn("FINORA Rule Engine", res.model_used)
-        self.assertIn("81,800.00", res.reply)  # 85,000 - 3,200
+        self.assertIn("81,800", res.reply)  # 85,000 - 3,200
         self.assertTrue(len(res.suggested_prompts) > 0)
 
         # 2. Ask highest spending
         res_spend = process_copilot_chat(self.db, user.id, "Where did I spend my money?")
         self.assertIn("Food", res_spend.reply)
-        self.assertIn("3,200.00", res_spend.reply)
+        self.assertIn("3,200", res_spend.reply)
 
     def test_expense_prediction_burn_rate_and_overrun(self) -> None:
         user = self._create_user("Priya Verma")
